@@ -1,5 +1,4 @@
-
-package work.lunxun;
+package direct;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -12,7 +11,7 @@ import java.nio.charset.StandardCharsets;
  * Time: 10:33
  * Author: Dily_Su
  * Remark: 生产者
- * topic模式 启用 routingKey模糊匹配
+ * direct模式 启用 routingKey
  * <p>
  * 所有的中间件技术都是基于 tcp/ip 协议基础上构建的新型协议规范, 只不过 rabbitmq 遵循的是 amqp
  */
@@ -39,7 +38,7 @@ public class Producer {
             channel = connection.createChannel();
 
             // 4、通过通道创建交换机, 声明队列, 绑定关系, 路由key, 发送消息和接收消息
-            String queueName = "queueDemo";
+            String queueName = Thread.currentThread().getName();
             /**
              * @params1 队列名称
              * @params2 是否要持久化，所谓之持久化消息是否存盘，非持久化消息是否存盘？
@@ -47,41 +46,43 @@ public class Producer {
              * @params4 是否自动删除，随着最后一个消息消费后是否把队列自动删除
              * @params5 携带附属参数
              */
-            channel.queueDeclare(queueName, false, false, false, null);
 
             // 5、准备消息内容
-            String msg = "hello work";
+            String msg = "hello direct";
 
             // 6、准备交换机
-            String exchangeName = "";
-            // 7、定义路由key/topic
-            String routerKey = "";
+            String exchangeName = "direct-exchange";
+            // 7、定义路由key
+            String routerKey = "email";
             // 8、指定交换机类型
-            String type = "work";
+            String type = "native/direct";
 
-//            /**
-//             *  声明交换机,通过可视化工具设置可以省略该过程
-//             * @params1 交换机名称
-//             * @params2 交换机类型
-//             * @params3 是否要持久化，所谓之持久化消息是否存盘，非持久化消息是否存盘？
-//             */
-//            channel.exchangeDeclare(exchangeName, type, true);
-//            /**
-//             * 创建队列,通过可视化工具设置可以省略该过程
-//             * @params1 队列名称
-//             * @params2 是否要持久化，所谓之持久化消息是否存盘，非持久化消息是否存盘？
-//             * @params3 排他性，是否独占独立
-//             * @params4 是否自动删除，随着最后一个消息消费后是否把队列自动删除
-//             * @params5 携带附属参数
-//             */
-//            channel.queueDeclare(queueName + 1, false, false, false, null);
-//            channel.queueDeclare(queueName + 2, false, false, false, null);
-//            // 队列绑定交换机,通过可视化工具设置可以省略该过程
-//            channel.queueBind(queueName + 1, exchangeName, "#.user.#");
-//            channel.queueBind(queueName + 2, exchangeName, "*.oa.*");
+            /**
+             * 声明交换机，通过可视化工具设置可以省略该过程
+             * @params1 交换机名称
+             * @params2 交换机类型
+             * @params3 是否要持久化，所谓之持久化消息是否存盘，非持久化消息是否存盘？
+             */
+            channel.exchangeDeclare(exchangeName, type, true);
+            /**
+             * 创建队列，通过可视化工具设置可以省略该过程
+             * @params1 队列名称
+             * @params2 是否要持久化，所谓之持久化消息是否存盘，非持久化消息是否存盘？
+             * @params3 排他性，是否独占独立
+             * @params4 是否自动删除，随着最后一个消息消费后是否把队列自动删除
+             * @params5 携带附属参数
+             */
+            channel.queueDeclare(queueName + 1, false, false, false, null);
+            channel.queueDeclare(queueName + 2, false, false, false, null);
+            channel.queueDeclare(queueName + 3, false, false, false, null);
+            // 队列绑定交换机，通过可视化工具设置可以省略该过程
+            channel.queueBind(queueName + 1, exchangeName, routerKey);
+            channel.queueBind(queueName + 2, exchangeName, routerKey);
+            channel.queueBind(queueName + 3, exchangeName, routerKey);
 
 
-            // 6、发送消息给队列queue
+
+            // 9、发送消息给队列queue
             /**
              * @params1 交换机
              * @params2 消息队列、路由key
@@ -89,7 +90,7 @@ public class Producer {
              * @params4 消息内容
              */
             for (int i = 0; i < 20; i++) {
-                channel.basicPublish(exchangeName, queueName, null, (msg + "-" + i).getBytes(StandardCharsets.UTF_8));
+                channel.basicPublish(exchangeName, routerKey, null, (msg + "-" + i).getBytes(StandardCharsets.UTF_8));
             }
             System.out.println("消息发送成功");
             System.in.read();
@@ -97,7 +98,7 @@ public class Producer {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            // 7、关闭通道
+            // 10、关闭通道
             if (channel != null && channel.isOpen()) {
                 try {
                     channel.close();
@@ -105,7 +106,7 @@ public class Producer {
                     e.printStackTrace();
                 }
             }
-            // 8、关闭连接
+            // 11、关闭连接
             if (connection != null && connection.isOpen()) {
                 try {
                     connection.close();

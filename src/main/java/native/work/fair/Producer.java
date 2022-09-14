@@ -57,7 +57,7 @@ public class Producer {
             // 7、定义路由key/topic
             String routerKey = "";
             // 8、指定交换机类型
-            String type = "work";
+            String type = "native/work";
 
 //            /**
 //             *  声明交换机,通过可视化工具设置可以省略该过程
